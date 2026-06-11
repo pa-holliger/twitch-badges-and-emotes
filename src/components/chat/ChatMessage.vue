@@ -32,7 +32,9 @@
 <script setup lang="ts">
 import type { Badge } from "@/stores/badgeStore"
 import { computed } from "vue"
+import { DEFAULT_EMOTES } from "@/data/defaultEmotes"
 import { useEmoteStore } from "@/stores/emoteStore"
+import { useUserStore } from "@/stores/userStore"
 
 const props = defineProps<{
   username: string
@@ -42,15 +44,17 @@ const props = defineProps<{
 }>()
 
 const emoteStore = useEmoteStore()
+const userStore = useUserStore()
 
 type MessagePart = { type: "text" | "emote", text: string, url?: string }
 
 const parsedMessage = computed<MessagePart[]>(() => {
   const parts: MessagePart[] = []
+  const allEmotes = [...DEFAULT_EMOTES, ...emoteStore.emotes]
 
   for (const word of props.message.split(" ")) {
-    const emote = emoteStore.emotes.find((e) => {
-      const fullName = e.prefix ? `${e.prefix}${e.name}` : e.name
+    const emote = allEmotes.find((e) => {
+      const fullName = e.id.startsWith("__") ? e.name : `${userStore.prefix}${e.name}`
       return fullName === word
     })
 

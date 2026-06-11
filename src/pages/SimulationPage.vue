@@ -56,22 +56,43 @@
 
     <div class="border-t border-border bg-bg-alt px-4 py-3 flex-shrink-0">
       <div
-        v-if="showEmotePicker && emoteStore.emotes.length > 0"
-        class="mb-2 bg-bg-elevated border border-border rounded-lg p-2 flex flex-wrap gap-1 max-h-36 overflow-y-auto"
+        v-if="showEmotePicker"
+        class="mb-2 bg-bg-elevated border border-border rounded-lg p-2 flex flex-col gap-2 max-h-36 overflow-y-auto"
       >
-        <button
-          v-for="emote in emoteStore.emotes"
-          :key="emote.id"
-          class="group relative p-1 rounded hover:bg-bg-alt transition-colors cursor-pointer"
-          :title="`${emote.prefix}${emote.name}`"
-          @click="insertEmote(emote)"
-        >
-          <img
-            :src="emote.url"
-            :alt="emote.name"
-            class="w-8 h-8 object-contain"
-          />
-        </button>
+        <div v-if="emoteStore.emotes.length > 0">
+          <p class="text-xs font-medium text-text-muted px-1 mb-1">{{ userStore.pseudo }}</p>
+          <div class="flex flex-wrap gap-1">
+            <button
+              v-for="emote in emoteStore.emotes"
+              :key="emote.id"
+              class="group relative p-1 rounded hover:bg-bg-alt transition-colors cursor-pointer"
+              @click="insertEmote(emote)"
+            >
+              <img :src="emote.url" :alt="emote.name" class="w-8 h-8 object-contain" />
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-bg-alt border border-border rounded text-xs text-text whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                {{ userStore.prefix }}{{ emote.name }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="emoteStore.emotes.length > 0"
+          class="border-t border-border" />
+
+        <div class="flex flex-wrap gap-1">
+          <button
+            v-for="emote in DEFAULT_EMOTES"
+            :key="emote.id"
+            class="group relative p-1 rounded hover:bg-bg-alt transition-colors cursor-pointer"
+            @click="insertEmote(emote)"
+          >
+            <img :src="emote.url" :alt="emote.name" class="w-8 h-8 object-contain" />
+            <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-1.5 py-0.5 bg-bg-alt border border-border rounded text-xs text-text whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+              {{ emote.name }}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div class="flex items-center gap-2">
@@ -83,7 +104,6 @@
         />
 
         <button
-          v-if="emoteStore.emotes.length > 0"
           class="flex-shrink-0 p-1.5 rounded hover:bg-bg-elevated transition-colors"
           :class="showEmotePicker ? 'text-purple' : 'text-text-muted hover:text-text'"
           @click="showEmotePicker = !showEmotePicker"
@@ -113,6 +133,7 @@
 import { computed, nextTick, onUnmounted, ref, watch } from "vue"
 import AppButton from "@/components/ui/AppButton.vue"
 import ChatMessage from "@/components/chat/ChatMessage.vue"
+import { DEFAULT_EMOTES } from "@/data/defaultEmotes"
 import { useBadgeStore } from "@/stores/badgeStore"
 import { useEmoteStore } from "@/stores/emoteStore"
 import { useUserStore } from "@/stores/userStore"
@@ -170,6 +191,8 @@ const userBadge = computed(() =>
   userStore.badgeId ? badgeStore.badges.find(b => b.id === userStore.badgeId) : undefined,
 )
 
+const allEmotes = computed(() => [...DEFAULT_EMOTES, ...emoteStore.emotes])
+
 function getBadgeForUser(username: string): Badge | undefined {
   if (!badgeStore.badges.length) return undefined
   const slot = hash(username) % (badgeStore.badges.length + 1)
@@ -178,9 +201,10 @@ function getBadgeForUser(username: string): Badge | undefined {
 
 function buildMessage(): string {
   const base = BASE_MESSAGES[Math.floor(Math.random() * BASE_MESSAGES.length)]
-  if (!emoteStore.emotes.length || Math.random() > 0.4) return base
-  const emote = emoteStore.emotes[Math.floor(Math.random() * emoteStore.emotes.length)]
-  const name = emote.prefix ? `${emote.prefix}${emote.name}` : emote.name
+  if (Math.random() > 0.4) return base
+  const pool = allEmotes.value
+  const emote = pool[Math.floor(Math.random() * pool.length)]
+  const name = emote.id.startsWith("__") ? emote.name : `${userStore.prefix}${emote.name}`
   const r = Math.random()
   if (r < 0.33) return `${name} ${base}`
   if (r < 0.66) return `${base} ${name}`
@@ -261,7 +285,7 @@ function sendOwnMessage() {
 }
 
 function insertEmote(emote: Emote) {
-  const name = emote.prefix ? `${emote.prefix}${emote.name}` : emote.name
+  const name = emote.id.startsWith("__") ? emote.name : `${userStore.prefix}${emote.name}`
   ownMessage.value = ownMessage.value ? `${ownMessage.value} ${name}` : name
   messageInput.value?.focus()
 }

@@ -220,7 +220,7 @@ async function pickFolder() {
     return
   isPicking.value = true
   try {
-    const dirHandle = await (window as Window & { showDirectoryPicker: () => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker()
+    const dirHandle = await (window as unknown as { showDirectoryPicker: () => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker()
     revokeAll()
     const newParsed: ParsedItem[] = []
     const newIgnored: IgnoredItem[] = []

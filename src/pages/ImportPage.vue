@@ -94,7 +94,7 @@
               </span>
             </td>
             <td class="px-4 py-3 text-text font-mono text-xs">
-              {{ emote.prefix }}{{ emote.name }}
+              {{ userStore.prefix }}{{ emote.name }}
             </td>
             <td class="px-4 py-3">
               <AppButton
@@ -122,9 +122,11 @@ import BulkImportDialog from "@/components/import/BulkImportDialog.vue"
 import AppButton from "@/components/ui/AppButton.vue"
 import { BADGE_LEVEL_LABELS, useBadgeStore } from "@/stores/badgeStore"
 import { useEmoteStore } from "@/stores/emoteStore"
+import { useUserStore } from "@/stores/userStore"
 
 const badgeStore = useBadgeStore()
 const emoteStore = useEmoteStore()
+const userStore = useUserStore()
 
 const showAddBadge = ref(false)
 const showAddEmote = ref(false)
