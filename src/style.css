@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@plugin "@egoist/tailwindcss-icons";
+
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #efeff1;
+  --bg-alt: #ffffff;
+  --bg-elevated: #f7f7f8;
+  --border: #dedee3;
+  --text: #0e0e10;
+  --text-muted: #53535f;
+  --purple: #9147ff;
+  --purple-hover: #772ce8;
+}
+
+.dark {
+  --bg: #0e0e10;
+  --bg-alt: #18181b;
+  --bg-elevated: #1f1f23;
+  --border: #2a2a2d;
+  --text: #efeff1;
+  --text-muted: #adadb8;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-alt: var(--bg-alt);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-purple: var(--purple);
+  --color-purple-hover: var(--purple-hover);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
