@@ -8,7 +8,7 @@
       <AppButton
         label="Ajouter une emote"
         icon="i-lucide-smile-plus"
-        @click="showAddEmote = true" />
+        @click="openAddEmote" />
       <AppButton
         label="Importer depuis un dossier"
         icon="i-lucide-folder-open"
@@ -46,12 +46,12 @@
             <th class="text-left text-xs font-medium text-text-muted px-4 py-2">
               Détails
             </th>
-            <th class="w-12" />
+            <th class="w-20" />
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="badge in badgeStore.badges"
+            v-for="badge in sortedBadges"
             :key="badge.id"
             class="border-b border-border hover:bg-bg-elevated transition-colors">
             <td class="px-6 py-3">
@@ -70,15 +70,17 @@
               {{ BADGE_LEVEL_LABELS[badge.level] }} - Tier {{ badge.tier }}
             </td>
             <td class="px-4 py-3">
-              <AppButton
-                icon="i-lucide-trash-2"
-                variant="ghost-danger"
-                title="Supprimer"
-                @click="badgeStore.remove(badge.id)" />
+              <div class="flex gap-1 justify-end">
+                <AppButton
+                  icon="i-lucide-trash-2"
+                  variant="ghost-danger"
+                  title="Supprimer"
+                  @click="badgeStore.remove(badge.id)" />
+              </div>
             </td>
           </tr>
           <tr
-            v-for="emote in emoteStore.emotes"
+            v-for="emote in sortedEmotes"
             :key="emote.id"
             class="border-b border-border hover:bg-bg-elevated transition-colors">
             <td class="px-6 py-3">
@@ -97,11 +99,18 @@
               {{ userStore.prefix }}{{ emote.name }}
             </td>
             <td class="px-4 py-3">
-              <AppButton
-                icon="i-lucide-trash-2"
-                variant="ghost-danger"
-                title="Supprimer"
-                @click="emoteStore.remove(emote.id)" />
+              <div class="flex gap-1 justify-end">
+                <AppButton
+                  icon="i-lucide-pencil"
+                  variant="ghost"
+                  title="Modifier"
+                  @click="openEditEmote(emote)" />
+                <AppButton
+                  icon="i-lucide-trash-2"
+                  variant="ghost-danger"
+                  title="Supprimer"
+                  @click="emoteStore.remove(emote.id)" />
+              </div>
             </td>
           </tr>
         </tbody>
@@ -109,19 +118,20 @@
     </div>
 
     <AddBadgeDialog v-model="showAddBadge" />
-    <AddEmoteDialog v-model="showAddEmote" />
+    <AddEmoteDialog v-model="showAddEmote" :emote="editedEmote" />
     <BulkImportDialog v-model="showBulkImport" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import AddBadgeDialog from "@/components/import/AddBadgeDialog.vue"
 import AddEmoteDialog from "@/components/import/AddEmoteDialog.vue"
 import BulkImportDialog from "@/components/import/BulkImportDialog.vue"
 import AppButton from "@/components/ui/AppButton.vue"
 import { BADGE_LEVEL_LABELS, useBadgeStore } from "@/stores/badgeStore"
 import { useEmoteStore } from "@/stores/emoteStore"
+import type { Emote } from "@/stores/emoteStore"
 import { useUserStore } from "@/stores/userStore"
 
 const badgeStore = useBadgeStore()
@@ -131,4 +141,27 @@ const userStore = useUserStore()
 const showAddBadge = ref(false)
 const showAddEmote = ref(false)
 const showBulkImport = ref(false)
+const editedEmote = ref<Emote | undefined>(undefined)
+
+const sortedBadges = computed(() =>
+  [...badgeStore.badges].sort((a, b) => a.level - b.level || a.tier - b.tier),
+)
+
+const sortedEmotes = computed(() =>
+  [...emoteStore.emotes].sort((a, b) => {
+    const nameA = `${userStore.prefix}${a.name}`.toLowerCase()
+    const nameB = `${userStore.prefix}${b.name}`.toLowerCase()
+    return nameA.localeCompare(nameB)
+  }),
+)
+
+function openAddEmote() {
+  editedEmote.value = undefined
+  showAddEmote.value = true
+}
+
+function openEditEmote(emote: Emote) {
+  editedEmote.value = emote
+  showAddEmote.value = true
+}
 </script>

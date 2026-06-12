@@ -1,7 +1,7 @@
 <template>
   <nav class="h-14 bg-bg-alt border-b border-border flex items-center px-4 gap-1 shrink-0">
     <div class="flex items-center gap-2 mr-4">
-      <span class="i-lucide-gamepad-2 text-purple text-xl" />
+      <img :src="logoUrl" alt="logo" class="w-6 h-6 object-contain" />
       <span class="font-bold text-purple text-sm hidden sm:block">Emote & Badge</span>
     </div>
 
@@ -50,6 +50,12 @@ import { useTheme } from "@/composables/useTheme"
 import { useUserDialog } from "@/composables/useUserDialog"
 import { useBadgeStore } from "@/stores/badgeStore"
 import { useUserStore } from "@/stores/userStore"
+import kappaUrl from "@/assets/kappa.png"
+import lulUrl from "@/assets/lul.png"
+import seemsgoodUrl from "@/assets/seemsgood.png"
+
+const LOGO_OPTIONS = [kappaUrl, lulUrl, seemsgoodUrl]
+const logoUrl = LOGO_OPTIONS[Math.floor(Math.random() * LOGO_OPTIONS.length)]
 
 const { theme, toggleTheme } = useTheme()
 const { open } = useUserDialog()

@@ -25,7 +25,7 @@
 
           <div class="px-5 py-4 flex flex-col gap-4">
             <div>
-              <label class="text-xs font-medium text-text-muted block mb-1.5">Pseudonyme</label>
+              <label class="text-xs font-medium text-text-muted block mb-1.5">Pseudonyme <span class="text-red-400">*</span></label>
               <input
                 v-model="form.pseudo"
                 placeholder="Ton pseudo"
@@ -83,7 +83,7 @@
             </div>
 
             <div>
-              <label class="text-xs font-medium text-text-muted block mb-1.5">Prefix des emotes</label>
+              <label class="text-xs font-medium text-text-muted block mb-1.5">Prefix des emotes <span class="text-red-400">*</span></label>
               <input
                 v-model="form.prefix"
                 placeholder="ex: BeeDB"
@@ -113,7 +113,7 @@
               @click="close" />
             <AppButton
               label="Sauvegarder"
-              :is-disabled="!form.pseudo.trim() || !form.color"
+              :is-disabled="!form.pseudo.trim() || !form.color || !form.prefix.trim()"
               @click="save" />
           </div>
         </div>

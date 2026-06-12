@@ -29,6 +29,16 @@ export const useEmoteStore = defineStore("emotes", () => {
     ]
   }
 
+  async function update(id: string, changes: Pick<StoredEmote, "name" | "prefix" | "blob" | "filename">) {
+    const updated: StoredEmote = { id, ...changes }
+    await saveEmote(updated)
+    emotes.value = emotes.value.map((e) => {
+      if (e.id !== id) return e
+      URL.revokeObjectURL(e.url)
+      return { ...updated, url: URL.createObjectURL(updated.blob) }
+    })
+  }
+
   async function remove(id: string) {
     await deleteEmote(id)
     const existing = emotes.value.find(e => e.id === id)
@@ -42,5 +52,5 @@ export const useEmoteStore = defineStore("emotes", () => {
     emotes.value = []
   }
 
-  return { emotes, load, add, remove, clear }
+  return { emotes, load, add, update, remove, clear }
 })

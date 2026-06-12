@@ -14,7 +14,7 @@
         <div class="bg-bg-alt border border-border rounded-xl w-full max-w-sm overflow-hidden shadow-xl">
           <div class="px-5 py-4 border-b border-border flex items-center justify-between">
             <h2 class="font-semibold text-text">
-              Ajouter une emote
+              {{ emote ? 'Modifier l\'emote' : 'Ajouter une emote' }}
             </h2>
             <AppButton
               icon="i-lucide-x"
@@ -86,8 +86,8 @@
               variant="ghost"
               @click="close" />
             <AppButton
-              label="Ajouter"
-              :is-disabled="!form.blob || !form.name.trim()"
+              :label="emote ? 'Enregistrer' : 'Ajouter'"
+              :is-disabled="!form.name.trim() || (!form.blob && !emote)"
               @click="confirm" />
           </div>
         </div>
@@ -99,11 +99,12 @@
 <script setup lang="ts">
 import { computed, onUnmounted, reactive, ref, watch } from "vue"
 import AppButton from "@/components/ui/AppButton.vue"
+import type { Emote } from "@/stores/emoteStore"
 import { useEmoteStore } from "@/stores/emoteStore"
 import { useUserStore } from "@/stores/userStore"
 import { processImage } from "@/utils/imageUtils"
 
-const props = defineProps<{ modelValue: boolean }>()
+const props = defineProps<{ modelValue: boolean, emote?: Emote }>()
 const emit = defineEmits<{ "update:modelValue": [boolean] }>()
 
 const IMAGE_EXTENSION_REGEX = /\.(png|gif|webp|jpe?g)$/i
@@ -114,6 +115,7 @@ const userStore = useUserStore()
 const fileInput = ref<HTMLInputElement | null>(null)
 const previewUrl = ref<string | null>(null)
 const isDragging = ref(false)
+const ownPreviewUrl = ref<string | null>(null)
 
 const form = reactive({
   name: "",
@@ -126,14 +128,27 @@ const nameError = computed(() => form.name === "" && form.blob !== null)
 watch(() => props.modelValue, (open) => {
   if (open)
     resetForm()
+  else
+    revokeOwnPreview()
 })
 
 function resetForm() {
-  form.name = ""
+  revokeOwnPreview()
+  form.name = props.emote?.name ?? ""
   form.blob = null
   form.sizeWarning = false
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
+  if (props.emote) {
+    previewUrl.value = props.emote.url
+  }
+  else {
+    previewUrl.value = null
+  }
+}
+
+function revokeOwnPreview() {
+  if (ownPreviewUrl.value) {
+    URL.revokeObjectURL(ownPreviewUrl.value)
+    ownPreviewUrl.value = null
     previewUrl.value = null
   }
 }
@@ -146,9 +161,9 @@ async function processFile(file: File) {
   const result = await processImage(file)
   form.blob = result.blob
   form.sizeWarning = result.sizeWarning
-  if (previewUrl.value)
-    URL.revokeObjectURL(previewUrl.value)
-  previewUrl.value = URL.createObjectURL(result.blob)
+  revokeOwnPreview()
+  ownPreviewUrl.value = URL.createObjectURL(result.blob)
+  previewUrl.value = ownPreviewUrl.value
   if (!form.name) {
     form.name = file.name.replace(IMAGE_EXTENSION_REGEX, "")
   }
@@ -168,26 +183,34 @@ function handleDrop(e: DragEvent) {
 }
 
 async function confirm() {
-  if (!form.blob || !form.name.trim())
+  if (!form.name.trim())
     return
 
-  const fullName = `${userStore.prefix}${form.name.trim()}`
-  const existing = emoteStore.emotes.find(e => `${e.prefix}${e.name}` === fullName)
-  if (existing)
-    await emoteStore.remove(existing.id)
-
-  await emoteStore.add({
-    id: crypto.randomUUID(),
-    filename: "",
-    name: form.name.trim(),
-    prefix: userStore.prefix,
-    blob: form.blob,
-  })
+  if (props.emote) {
+    await emoteStore.update(props.emote.id, {
+      filename: props.emote.filename,
+      name: form.name.trim(),
+      prefix: userStore.prefix,
+      blob: form.blob ?? props.emote.blob,
+    })
+  }
+  else {
+    if (!form.blob)
+      return
+    const fullName = `${userStore.prefix}${form.name.trim()}`
+    const existing = emoteStore.emotes.find(e => `${e.prefix}${e.name}` === fullName)
+    if (existing)
+      await emoteStore.remove(existing.id)
+    await emoteStore.add({
+      id: crypto.randomUUID(),
+      filename: "",
+      name: form.name.trim(),
+      prefix: userStore.prefix,
+      blob: form.blob,
+    })
+  }
   close()
 }
 
-onUnmounted(() => {
-  if (previewUrl.value)
-    URL.revokeObjectURL(previewUrl.value)
-})
+onUnmounted(revokeOwnPreview)
 </script>
